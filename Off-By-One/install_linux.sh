@@ -22,7 +22,7 @@ cd ..
 # Install fuzzili
 wget https://github.com/googleprojectzero/fuzzilli/archive/refs/tags/v0.9.3.tar.gz
 tar -xf v0.9.3.tar.gz
-cd v0.9.3.tar.gz
+cd fuzzilli-0.9.3.tar.gz
 swift build -c release -Xlinker='-lrt'
 cd ..
 ###################################
