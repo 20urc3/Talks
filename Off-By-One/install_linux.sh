@@ -2,7 +2,8 @@ apt-get update -y
 ###################################
 # Installing AFL++
 # Dependencies
-apt-get install -y build-essential python3-dev automake cmake git flex bison libglib2.0-dev libpixman-1-dev python3-setuptools python3-pip ninja-build 
+apt-get install -y build-essential python3-dev automake cmake git flex bison libglib2.0-dev libpixman-1-dev python3-setuptools python3-pip ninja-build gcc libncurses-dev libelf-dev libssl-dev
+apt install qemu-system-x86
 pip install unicorn
 
 # Installing clang for AFL++
