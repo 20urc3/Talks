@@ -1,4 +1,4 @@
-# Part 1:
+### Part 1:
 
 Since I was a kid I always loved computers. While growing up I often ask myself what would I have
 done of my life if those fabulous machine didn't existed yet, and I pictured myself building all kind
@@ -13,7 +13,7 @@ It appears clearly that the human desire to automate tasks isn't new, we always 
 
 For me, automation is a savant mix between cleverness and laziness. You can't operate one without the other, pure laziness would be giving up on the task and pure cleverness would be entirely hypothetical.
 
-# Part 2: Automation thought process
+### Part 2: Automation thought process
 
 While preparing this talk I realized that I wanted you, the audience, to gain something more valuable than a list of tools or a simple trick. So I tried to built a mindmap, a thought process, on how automation works for me. As you might have guess by now, I'm really lazy, despite not being the most clever. So Automation has always had an import place in my heart. 
 
@@ -24,7 +24,7 @@ My recipe for a good automation is the following:
 - Fourth: Refine your process. Once you run it a few time, identify the weak and the strong spot, try to take full advantage of the strength of your process and to improve and fix as much as you can your weaknesses.
 - Fifth: Profit! Your whole mechanism is in place it's now time to run it and see how it perform against the real world.
 
-# Part 3: Existing example
+### Part 3: Existing example
 
 Here follows a few interesting example where research leverage tools, LLM, and task distribution to achieve profitable bug hunting.
 - https://google.github.io/oss-fuzz/research/llms/target_generation/ 
@@ -32,7 +32,7 @@ Here follows a few interesting example where research leverage tools, LLM, and t
 - https://labs.detectify.com/ethical-hacking/hakluke-creating-the-perfect-bug-bounty-automation/
 
 
-# Part 4: Show off
+### Part 4: Show off
 I decided to put in practice what I was preaching. I built a pipe to automate fuzzing interesting target, hoping to get a bounty or a nice bug out of it.
 
 - My first step was to automate monitor bug bounty website and make my bot reporting to me every week a summary of new scope, new targets, or previously rewarded target that wasn't listed in my db before.
@@ -40,8 +40,8 @@ I decided to put in practice what I was preaching. I built a pipe to automate fu
 - Then I feed that into my SAST/DAST pipeline, where I basically reproduced what we saw oss-fuzz was doing, automated harness generation for fuzzing and SAST scans.
 - And finally I profited! There is other bugs waiting to be disclosed, but I already got a Denial of service in 7zip reported and rewarded by ZDI using this automated process!
 
-# Part 5: Lesson learned
+### Part 5: Lesson learned
 Automation is great but it is only the result of hard work and intense research. There is a slight difference between obsessing over automating a task that would not result in any gain of time and just make it easier to perform manually or integrated in a whole automation process. Like everything in life it's a matter of balance and you need to take the time to weight your choices before spending days or weeks implementing it. Automation is great, but it's like everything else, it's only as good as you are.
 
-# Part 6: Wait, here is where we are now.
+### Part 6: Wait, here is where we are now.
 - list of tools
