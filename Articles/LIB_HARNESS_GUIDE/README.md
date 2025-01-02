@@ -1,5 +1,5 @@
 # Intro
-Every fuzzing enthusiast dream is a program that takes a file as arguments, have a deep coverage and a fast speed execution. Unfortunately in the real world only few targets correspond to this description, allowing not to dumb fuzz them (and you should not! See [this](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.persistent_mode.md))
+Every security researcher/fuzzer enthusiast's dream is a program that takes a file as arguments, have a deep coverage and a fast speed execution. Unfortunately in the real world only few targets correspond to this description, allowing not to dumb fuzz them (and you should not! See [this](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.persistent_mode.md))
 
 Most target are not fuzzable as such and requires you, the researcher, to do some heavy lifting before it is possible to efficiently fuzzing it. In this article we are going to cover *how to fuzz a library*. From **getting started** to **persistent mode**. We will focus on [Freetype](http://freetype.org/) a software library that is used by all kinds of applications to access the contents of font files.
 
@@ -821,4 +821,9 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 }
 ```
 
+# Conclusion
+Creating a harness isn’t just about running tools—it's about understanding the nuances of your target, anticipating edge cases, and iterating on what you learn. A good fuzzing harness isn’t perfect on the first attempt, but a carefully constructed one evolves into an indispensable tool for finding bugs and understanding the target's behavior under stress.
 
+By following the principles and strategies laid out here, you’re not just building a harness; you’re equipping yourself to systematically tear into assumptions, test boundaries, and uncover vulnerabilities that others might miss. Whether your target is a well-known library or something more obscure, this approach gives you the foundation to fuzz effectively and meaningfully.
+
+Harnessing isn’t glamorous—it’s technical, iterative, and occasionally frustrating. But when the crash reports start rolling in, you’ll know it was worth the effort.
