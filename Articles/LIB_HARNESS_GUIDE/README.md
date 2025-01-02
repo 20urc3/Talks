@@ -1,7 +1,7 @@
 # Intro
-Every fuzzing enthusiast dream is a program that takes a file as arguments, have a deep coverage and a fast speed execution. Unfortunately in the real world only few targets correspond to this description, allowing to dumb fuzz them (and you should not! See [this](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.persistent_mode.md). Most target are not fuzzable as such and requires you, the research, to do some heavy lifting before it is possible to efficiently fuzzing it.
+Every fuzzing enthusiast dream is a program that takes a file as arguments, have a deep coverage and a fast speed execution. Unfortunately in the real world only few targets correspond to this description, allowing not to dumb fuzz them (and you should not! See [this](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.persistent_mode.md))
 
-In this article we are going to cover *how to fuzz a library*. From **getting started** to **persistent mode**. We will focus on [Freetype](http://freetype.org/) a software library that is used by all kinds of applications to access the contents of font files.
+Most target are not fuzzable as such and requires you, the researcher, to do some heavy lifting before it is possible to efficiently fuzzing it. In this article we are going to cover *how to fuzz a library*. From **getting started** to **persistent mode**. We will focus on [Freetype](http://freetype.org/) a software library that is used by all kinds of applications to access the contents of font files.
 
 Fuzzing a library is summarize in those crucial steps:
 - Instrumenting the library.
@@ -9,12 +9,8 @@ Fuzzing a library is summarize in those crucial steps:
 - Listing interesting functions.
 - Write a harness.
 - Write specifics harness.
-- Gather a corpus.
-- Running the fuzzing campaign.
-- Triage results.
 
 # Instrumenting the library
-
 Instrumentation refers to the process of modifying a program's binary or source code to insert additional tracking and monitoring code that helps the fuzzer collect meaningful coverage information and guide the fuzzing process. This instrumentation allows AFL++ to understand which code paths are being executed during fuzzing, enabling more intelligent and efficient exploration of the program's potential execution paths.
 
 If you instrument with **LTO mode** (**afl-clang-fast/afl-clang-lto**), the following options are available:
@@ -22,7 +18,6 @@ If you instrument with **LTO mode** (**afl-clang-fast/afl-clang-lto**), the foll
  - A different technique (and usually a better one than laf-intel) is to instrument the target so that any compare values in the target are sent to AFL++ which then tries to put these values into the fuzzing data at different locations.  You can read more about this in [instrumentation/README.cmplog.md](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.cmplog.md).
 
 ## Installing AFL++
-
 The installation instructions can be found [here](https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/INSTALL.md). First start by installing LLVM
 ```bash
 # Install a specific version of LLVM:
@@ -46,9 +41,7 @@ sudo make install
 ```
 
 ## Compiling a target library
-
 The process of compiling a library can be more or less complex depending on the target. In this exercise Freetype compilation is a straightforward process.
-
 ```bash
 git clone https://gitlab.freedesktop.org/freetype/freetype.git
 cd freetype
@@ -56,13 +49,10 @@ cd freetype
 ./configure CC=afl-clang-lto CXX=afl-clang-lto++ CFLAGS="-O1" CXXFLAGS="-O1" 
 make
 ```
-
 If everything works correctly you will end up with multiple `.a` files composing the actual library.
 
 ## Testing the library
-
 In order to verify everything went correctly, let's write a small harness. First we check the [Freetype documentation](http://freetype.org/freetype2/docs/documentation.html) page and find a [tutorial](http://freetype.org/freetype2/docs/tutorial/step1.html#section-1) which describes the basic steps to use the library. Following this guide we are going to write this very minimalist harness.
-
 ```c
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -93,14 +83,13 @@ We can now compile our target with the following command:
 ```bash
 afl-clang-lto simple_harness.c -I/path/to/include -L/path/to/freetype -lfreetype -o test
 ```
-
 If everything goes well, you will end up with `test` `.elf` file that you can fuzz. You can try to fuzz it by running: `afl-fuzz -i inputs -o output -- ./test @@`
 
-![[Pasted image 20241119071640.png]]
+![Pasted image 20241119071640](https://github.com/user-attachments/assets/7e605911-5071-4f18-b219-3e4192eb46ce)
 
 Congratulations, you just harnessed a library ! Well, this program does not so much isn't it ? In fact, what we wrote is very unlikely to yield new bugs. Freetype is a library that has been tested in the past and a function that performs so little actions is very unlikely to contains a memory issue (unless.. ?). It's time now to write a more advanced harness that has a chance to discover new bugs!
-# Going through the documentation
 
+# Going through the documentation
 Going through a library or a software documentation can be a tedious task. It's very often overlooked because after all: a few days of debugging can avoid you the pain of reading a few pages of doc right ?  Joke aside, willing to fuzz a certain library or program means wanting to learn about it. The strategy of throwing dumb fuzzer to any target you can think of, without spending the time and efforts to learn about the target revealed itself very inefficient nowadays. When writing an harness for a library it is important to understand *what* the library is doing, what are the main purposes ? What are the main features ? How it processes inputs ? What are the internal mechanisms of the library ? What are the features that processes user's inputs?
 
 We will take this time to gain a first understanding of the library, it's main components and capabilities and what part is worth trying to fuzz. In the main [documentation](https://freetype.org/freetype2/docs/documentation.html) of Freetype we find the[FAQ](https://freetype.org/freetype2/docs/ft2faq.html) section that contains a link to he page [what is Freetype](https://freetype.org/freetype2/docs/ft2faq.html#general-what).
@@ -108,15 +97,12 @@ We will take this time to gain a first understanding of the library, it's main c
 #### What is FreeType ?
 Freetype is:
 *"It is a software library that can be used by all kinds of applications to access the contents of font files. Most notably, it supports the following features.*
-
 - *It provides a uniform interface to access font files. It supports both bitmap and scalable formats, including TrueType, OpenType, Type1, CID, CFF, Windows FON/FNT, X11 PCF, and others.*
 - *It supports high-speed, anti-aliased glyph bitmap generation with 256 gray levels.*
 - *It is extremely modular, each font format being supported by a specific module. A build of the library can be tailored to support only the formats you need, thus reducing code size. A minimal anti-aliasing build of FreeType can be less than 30kByte."*
 
 The documentation also describes what FreeType is **not**:
-
 *FreeType doesn't try to perform a number of sophisticated things, because it focuses on being an excellent font service.This means that the following features are not supported directly by the library.*
-
 - ***rendering glyphs to arbitrary surfaces***  
 - ***glyph caching***  
 - ***text layout***  
@@ -124,9 +110,7 @@ The documentation also describes what FreeType is **not**:
 This gives us a basic idea of what FreeType does. Let's dig a bit deeper in the documentation and read the [Design](https://freetype.org/freetype2/docs/design/design-2.html) section.
 
 #### FreeType Design
-
 The documentation described FreeType as a *collection of components* where each of them is in charge of one specific task.
-
 - *Client applications typically call the FreeType 2 **high-level API**, whose functions are implemented in a single component called the Base Layer.*    
 - *Depending on the context or the task, the base layer then calls one or more module components to perform the work. In most cases, the client application doesn't need to know which module was called.*   
 - *The base layer also contains a set of routines that are used for generic things like memory allocation, list processing, I/O stream parsing, fixed-point computation, etc. These functions can also be called by a module at any time, and they form what is called the **low-level base API**.*
@@ -134,16 +118,13 @@ The documentation described FreeType as a *collection of components* where each 
 
 
 #### Internal objects and classes
-
 In this [section] (https://freetype.org/freetype2/docs/design/design-4.html) is described the memory management and input stream basic mechanisms of FreeType. Here below of few interesting information extracted from the documentation.
-
 - Most memory management operations are performed through three specific routines of the base layer: FT_Alloc, FT_Realloc, and FT_Free. Each one of these functions expects a FT_Memory handle as its first parameter. Note, however, that there exist more, similar variants for specific purposes which we skip here for simplicity. By default, this manager uses the ANSI functions malloc, realloc, and free. However, as ftsystem is a replaceable part of the base layer, a specific build of the library could provide a different default memory manager.
 - Font files are always read through FT_Stream objects. The definition of [`FT_StreamRec`](https://freetype.org/freetype2/docs/reference/ft2-system_interface.html#ft_streamrec) is located in the public header file ftsystem.h, which allows client developers to provide their own implementation of streams if they wish so. The function [`FT_New_Face`](https://freetype.org/freetype2/docs/reference/ft2-base_interface.html#ft_new_face) always automatically creates a new stream object from the C pathname given as its second argument. This is achieved by calling the (internal) function FT_Stream_Open provided by the ftsystem component. As the latter is replaceable, the implementation of streams may vary greatly between platforms. As an example, the default implementation of streams is located in the file src/base/ftsystem.c and uses the ANSI functions fopen, fseek, and fread. However, the Unix build of **FreeType 2 provides an alternative implementation that uses memory-mapped files, when available on the host platform, resulting in a significant access speed-up.**
+![Pasted image 20241119074529](https://github.com/user-attachments/assets/03609f06-ae9c-4aab-9c87-e2b60a015fae)
 
-![[Pasted image 20241119075311.png]]
 
 #### Summary
-
 In summary we learned that FreeType:
 - Allows to access font type.
 - Is composed of modules.
@@ -151,17 +132,13 @@ In summary we learned that FreeType:
 - Most memory management are performed through specific routines.
 - Font files are read through `FT_Stream` objects.
 - The Unix build provides an implementation allowing to use memory-mapped file.
-
 The documentation reveals several areas that deserve particular attention when working with or testing the library:
-
 - The memory management system's centralized nature makes it a critical point for reliability testing
 - The stream abstraction layer, especially in Unix builds with memory-mapped files, represents a complex interaction point
 - The modular architecture suggests that testing should consider both module-specific and inter-module interactions
-
 Thankfully, it is not mandatory to become an FreeType expert to be able to write good harnesses, we have now a solid understanding of its mechanisms and will be able to implement functions of the library in our harnesses.
 
 # List interesting functions
-
 Now that we gained a good understanding of what the library does, it's time to make a list of the functions that are worth to try fuzz testing or important for writing our harness. Beginning by the FreeType [tutorial](https://freetype.org/freetype2/docs/tutorial/index.html) page we collect these function
 ##### Tutorial 1
 - Library init
@@ -354,9 +331,7 @@ FT_Done_Face(face);
 FT_Done_FreeType(library);
 return 0;
 }
-
 ```
-
 This harness, despite trivial, is a perfectly good example of what you can code to start fuzzing a library. It contains interesting function for AFL to explore that could contains potential bugs.
 
 ##  Harness Tutorial 2
@@ -444,9 +419,7 @@ return 0;
 }
 ```
 
-
 #  Improving harness
-
 We can improve drastically the speed of execution of our harness by using AFL++ [persistent mode](https://github.com/AFLplusplus/AFLplusplus/tree/stable/utils/persistent_mode) to pass input from memory instead of using File I/O.
 
 **LLVMTestOneInput**
@@ -508,8 +481,6 @@ return 0;
 
 This allows our harness to go from 5000 exec/sec to 40000 exec/sec ! 
 
-
-
 ##  Harness API
 There is multiple way to write harnesses. You can choose to write one **BIG** harness that use a lot (or every) functions, or you can group some functions together. We are going to do both: 
 - A relatively small harness per API sub-topic
@@ -570,7 +541,6 @@ if (error) { printf("Could not load the library"); return 0; }
 
     // Cleanup
     FT_Done_Face(face);
-    }
 
 // Cleanup
 FT_Done_FreeType(library);
@@ -588,8 +558,6 @@ return 0;
 #include <math.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
-
-  
 
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 if (size < 10) return 0; // Reject very small inputs
@@ -637,11 +605,8 @@ if (error) { printf("Could not load the library"); return 0; }
     FT_Set_Transform(face, &matrix, &delta);
     FT_Get_Transform(face, &matrix, &delta);
 
-    // Cleanup
-    FT_Done_Face(face);
-    }
-
 // Cleanup
+FT_Done_Face(face);
 FT_Done_FreeType(library);
 return 0;
 
@@ -658,29 +623,9 @@ return 0;
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 
-/* this lets the source compile without afl-clang-fast/lto */
-#ifndef __AFL_FUZZ_TESTCASE_LEN
 
-ssize_t       fuzz_len;
-unsigned char fuzz_buf[1024000];
-
-  #define __AFL_FUZZ_TESTCASE_LEN fuzz_len
-  #define __AFL_FUZZ_TESTCASE_BUF fuzz_buf
-  #define __AFL_FUZZ_INIT() void sync(void);
-  #define __AFL_LOOP(x) \
-    ((fuzz_len = read(0, fuzz_buf, sizeof(fuzz_buf))) > 0 ? 1 : 0)
-  #define __AFL_INIT() sync()
-
-#endif
-
-__AFL_FUZZ_INIT();
-
-
-int main(int argc, char  ** argv)
-{
-
-size_t        len; // how much input did we read?
-unsigned char *buf; // test case buffer pointer
+int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+if (size < 10) return 0; // Reject very small inputs
 FT_Library library; // handle to library 
 FT_Face face; // handle to face object 
 FT_Error error; // hande to error
@@ -688,21 +633,13 @@ FT_UInt previous, glyph_index;
 FT_Vector kerning;
 FT_Fixed akerning;
 
-buf = __AFL_FUZZ_TESTCASE_BUF; 
-
 // Init library
 error = FT_Init_FreeType(&library);
 if (error) { printf("Could not load the library"); return 0; }
 
-
-
-while (__AFL_LOOP(UINT_MAX)) {
-    len = __AFL_FUZZ_TESTCASE_LEN; 
-    if (len < 8) { continue; } // Check len minimum size
-
     error = FT_New_Memory_Face(library,
-                            buf,    /* first byte in memory */
-                            len,      /* size in bytes        */
+                            data,    /* first byte in memory */
+                            size,      /* size in bytes        */
                             0,         /* face_index           */
                             &face );
     if (error) { printf("Could not create a face"); return 0; }
@@ -713,11 +650,8 @@ while (__AFL_LOOP(UINT_MAX)) {
     FT_Get_Kerning(face, previous, glyph_index, FT_KERNING_DEFAULT, &kerning);
     FT_Get_Track_Kerning(face, (FT_Fixed) 4, (FT_Int) 3, (FT_Fixed*) akerning);
     
-    // Cleanup
-    FT_Done_Face(face);
-    }
-
 // Cleanup
+FT_Done_Face(face);
 FT_Done_FreeType(library);
 return 0;
 
