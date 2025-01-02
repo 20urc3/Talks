@@ -78,7 +78,9 @@ We can now compile our target with the following command:
 afl-clang-fast simple_harness.c -I/path/to/include -L/path/to/freetype -lfreetype -o test
 ```
 If everything goes well, you will end up with `test` `.elf` file that you can fuzz. You can try to fuzz it by running: `afl-fuzz -i inputs -o output -- ./test @@`
+
 ![Pasted image 20241119071640](https://github.com/user-attachments/assets/7e605911-5071-4f18-b219-3e4192eb46ce)
+
 Congratulations, you've successfully harnessed a library! However, this program doesn’t do much, does it? In fact, what we wrote is unlikely to uncover new bugs. Freetype, being a library that has undergone extensive testing, is less likely to have memory issues in such a basic function (unless…?). Now it’s time to write a more advanced harness—one that stands a real chance of discovering new bugs!
 
 # Going through the Documentation
