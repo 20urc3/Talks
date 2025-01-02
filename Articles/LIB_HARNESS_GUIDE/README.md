@@ -114,7 +114,8 @@ The documentation described FreeType as a *collection of components* where each 
 - *Client applications typically call the FreeType 2 **high-level API**, whose functions are implemented in a single component called the Base Layer.*    
 - *Depending on the context or the task, the base layer then calls one or more module components to perform the work. In most cases, the client application doesn't need to know which module was called.*   
 - *The base layer also contains a set of routines that are used for generic things like memory allocation, list processing, I/O stream parsing, fixed-point computation, etc. These functions can also be called by a module at any time, and they form what is called the **low-level base API**.*
-![[Pasted image 20241119074529.png]]
+![Pasted image 20241119075311](https://github.com/user-attachments/assets/170196ee-32f8-4bd9-a3d5-8ece5c01f9b8)
+
 
 
 #### Internal objects and classes
