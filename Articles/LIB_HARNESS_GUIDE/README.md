@@ -809,9 +809,20 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     return 0;
 }
 ```
-# Conclusion
-Creating a harness isn’t just about running tools—it's about understanding the nuances of your target, anticipating edge cases, and iterating on what you learn. A good fuzzing harness isn’t perfect on the first attempt, but a carefully constructed one evolves into an indispensable tool for finding bugs and understanding the target's behavior under stress.
+# Tips and tricks
+- You can sometime find some harness when searching google for previous researcher work
+- Sometime project implement fuzzing test themself, it's a good thing to have a look there and see what they actually cover or not (might give you an edge)
+- Same goes for OSS-Fuzz, go see what part of the lib/function is covered by oss-fuzz and see if they did not miss something interesting
+- General tips:
+    - Have a good corpus
+    - Compile only some version of the harness with asan, 1/15 of them for better coverage
+    - Same goes with optimization (`-O3` will give you the best coverage)
+    - Think about [Redqueen](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.cmplog.md)
+    - Don't forget to optimize your system with [those tips](https://aflplus.plus/docs/perf_tips/)
+    - Have a look at other article for inspiration, [like](https://appsec.guide/docs/fuzzing/techniques/writing-harnesses/) that and [this](https://github.com/Microsvuln/Awesome-Libfuzzer-Harness)
 
-By following the principles and strategies laid out here, you’re not just building a harness; you’re equipping yourself to systematically tear into assumptions, test boundaries, and uncover vulnerabilities that others might miss. Whether your target is a well-known library or something more obscure, this approach gives you the foundation to fuzz effectively and meaningfully.
+You can find more harness I made for this article [here](https://github.com/20urc3/Publications/tree/main/Articles/LIB_HARNESS_GUIDE/harness)
+# Conclusion
+Creating a harness isn’t just about running tools—it's about understanding the nuances of your target, anticipating edge cases, and iterating on what you learn. A good fuzzing harness isn’t perfect on the first attempt, but a carefully constructed one evolves into an indispensable tool for finding bugs and understanding the target's behavior under stress. By following the principles and strategies laid out here, you’re not just building a harness; you’re equipping yourself to systematically tear into assumptions, test boundaries, and uncover vulnerabilities that others might miss. Whether your target is a well-known library or something more obscure, this approach gives you the foundation to fuzz effectively and meaningfully.
 
 Harnessing isn’t glamorous—it’s technical, iterative, and occasionally frustrating. But when the crash reports start rolling in, you’ll know it was worth the effort.
