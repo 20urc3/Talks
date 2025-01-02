@@ -445,11 +445,75 @@ return 0;
 ```
 
 
+#  Improving harness
+
+We can improve drastically the speed of execution of our harness by using AFL++ [persistent mode](https://github.com/AFLplusplus/AFLplusplus/tree/stable/utils/persistent_mode) to pass input from memory instead of using File I/O.
+
+**LLVMTestOneInput**
+```c
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+
+int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+
+    return 0;
+}
+
+```
+
+**AFL Persistent mode**
+```c
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+/* this lets the source compile without afl-clang-fast/lto */
+#ifndef __AFL_FUZZ_TESTCASE_LEN
+
+ssize_t       fuzz_len;
+unsigned char fuzz_buf[1024000];
+
+  #define __AFL_FUZZ_TESTCASE_LEN fuzz_len
+  #define __AFL_FUZZ_TESTCASE_BUF fuzz_buf
+  #define __AFL_FUZZ_INIT() void sync(void);
+  #define __AFL_LOOP(x) \
+    ((fuzz_len = read(0, fuzz_buf, sizeof(fuzz_buf))) > 0 ? 1 : 0)
+  #define __AFL_INIT() sync()
+
+#endif
+
+__AFL_FUZZ_INIT();
+
+
+int main(int argc, char  ** argv)
+{
+
+size_t        len;                        /* how much input did we read? */
+unsigned char *buf;                        /* test case buffer pointer    */
+
+buf = __AFL_FUZZ_TESTCASE_BUF; 
+
+while (__AFL_LOOP(UINT_MAX)) {
+    len = __AFL_FUZZ_TESTCASE_LEN; 
+    if (len < 8) { continue; } // Check len minimum size
+}
+
+return 0;
+
+}
+```
+
+This allows our harness to go from 5000 exec/sec to 40000 exec/sec ! 
+
+
+
 ##  Harness API
 There is multiple way to write harnesses. You can choose to write one **BIG** harness that use a lot (or every) functions, or you can group some functions together. We are going to do both: 
 - A relatively small harness per API sub-topic
-- A medium harness per API
-- A **large** harness with every functions
+- A medium harness per API called `API harness`
 ### API Sub-topic harnesses
 #### Core API
 ##### Font Testing Macros harness
@@ -659,354 +723,6 @@ return 0;
 
 }
 ```
-##### Character Mapping
-```c
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <ft2build.h>
-#include <math.h>
-#include FT_FREETYPE_H
-#include FT_GLYPH_H
-
-#define NUM_ENCODINGS (sizeof(supported_encodings) / sizeof(supported_encodings[0])) // trick to randomly choose encoding
-
-/* this lets the source compile without afl-clang-fast/lto */
-#ifndef __AFL_FUZZ_TESTCASE_LEN
-
-ssize_t       fuzz_len;
-unsigned char fuzz_buf[1024000];
-
-  #define __AFL_FUZZ_TESTCASE_LEN fuzz_len
-  #define __AFL_FUZZ_TESTCASE_BUF fuzz_buf
-  #define __AFL_FUZZ_INIT() void sync(void);
-  #define __AFL_LOOP(x) \
-    ((fuzz_len = read(0, fuzz_buf, sizeof(fuzz_buf))) > 0 ? 1 : 0)
-  #define __AFL_INIT() sync()
-
-#endif
-
-__AFL_FUZZ_INIT();
-
-
-int main(int argc, char  ** argv)
-{
-
-size_t        len; // how much input did we read?
-unsigned char *buf; // test case buffer pointer
-FT_Library library; // handle to library 
-FT_Face face; // handle to face object 
-FT_Error error; // hande to error
-FT_UInt agindex; 
-FT_Encoding supported_encodings[] = {
-    FT_ENCODING_NONE,
-    FT_ENCODING_MS_SYMBOL,
-    FT_ENCODING_UNICODE,
-    FT_ENCODING_SJIS,
-    FT_ENCODING_PRC,
-    FT_ENCODING_BIG5,
-    FT_ENCODING_WANSUNG,
-    FT_ENCODING_JOHAB,
-    FT_ENCODING_ADOBE_STANDARD,
-    FT_ENCODING_ADOBE_EXPERT,
-    FT_ENCODING_ADOBE_CUSTOM,
-    FT_ENCODING_ADOBE_LATIN_1,
-    FT_ENCODING_OLD_LATIN_2,
-    FT_ENCODING_APPLE_ROMAN
-};
-
-buf = __AFL_FUZZ_TESTCASE_BUF; 
-
-// Init library
-error = FT_Init_FreeType(&library);
-if (error) { printf("Could not load the library"); return 0; }
-
-while (__AFL_LOOP(UINT_MAX)) {
-    len = __AFL_FUZZ_TESTCASE_LEN; 
-    if (len < 8) { continue; } // Check len minimum size
-
-    error = FT_New_Memory_Face(library,
-                            buf,    /* first byte in memory */
-                            len,      /* size in bytes        */
-                            0,         /* face_index           */
-                            &face );
-    if (error) { printf("Could not create a face"); return 0; }
-    
-    // Character testing
-    FT_Select_Charmap(face, supported_encodings[rand() % NUM_ENCODINGS]);
-    FT_Set_Charmap(face, 0);
-    FT_Get_Charmap_Index(face->charmap);
-    FT_Get_Char_Index(face, (FT_ULong) rand() % 256); // Little trick to cover all extended ASCII possibilities
-    FT_Get_First_Char(face, &agindex);
-    FT_Get_Next_Char(face, (FT_ULong) rand() % 256, &agindex);
-    FT_Load_Char(face, (FT_ULong) rand() % 256, FT_LOAD_DEFAULT);
-
-    // Cleanup
-    FT_Done_Face(face);
-    }
-
-// Cleanup
-FT_Done_FreeType(library);
-return 0;
-
-}
-```
-##### Information Retrieval
-```c
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <ft2build.h>
-#include <math.h>
-#include FT_FREETYPE_H
-#include FT_GLYPH_H
-
-/* this lets the source compile without afl-clang-fast/lto */
-#ifndef __AFL_FUZZ_TESTCASE_LEN
-
-ssize_t       fuzz_len;
-unsigned char fuzz_buf[1024000];
-
-  #define __AFL_FUZZ_TESTCASE_LEN fuzz_len
-  #define __AFL_FUZZ_TESTCASE_BUF fuzz_buf
-  #define __AFL_FUZZ_INIT() void sync(void);
-  #define __AFL_LOOP(x) \
-    ((fuzz_len = read(0, fuzz_buf, sizeof(fuzz_buf))) > 0 ? 1 : 0)
-  #define __AFL_INIT() sync()
-
-#endif
-
-__AFL_FUZZ_INIT();
-
-
-int main(int argc, char  ** argv)
-{
-
-size_t        len; // how much input did we read?
-unsigned char *buf; // test case buffer pointer
-FT_Library library; // handle to library 
-FT_Face face; // handle to face object 
-FT_Error error; // hande to error
-FT_String*  glyph_name;
-FT_Pointer buffer;
-
-// For each subglyph (you need to know how many there are)
-FT_UInt index;
-FT_Int p1, p2;
-FT_UInt flags;
-FT_Matrix matrix;
-
-buf = __AFL_FUZZ_TESTCASE_BUF; 
-
-// Init library
-error = FT_Init_FreeType(&library);
-if (error) { printf("Could not load the library"); return 0; }
-
-while (__AFL_LOOP(UINT_MAX)) {
-    len = __AFL_FUZZ_TESTCASE_LEN; 
-    if (len < 8) { continue; } // Check len minimum size
-
-    error = FT_New_Memory_Face(library,
-                            buf,    /* first byte in memory */
-                            len,      /* size in bytes        */
-                            0,         /* face_index           */
-                            &face );
-    if (error) { printf("Could not create a face"); return 0; }
-    
-    FT_Load_Glyph(face, (FT_UInt) rand() % 256, FT_LOAD_NO_SCALE);
-
-
-    // Info retrieval testing
-    if FT_HAS_GLYPH_NAMES(face) {
-    FT_Get_Name_Index(face, glyph_name);
-    FT_Get_Glyph_Name(face, (FT_UInt) rand() % 256, buffer, (FT_UInt) 256);
-    }
-    
-    FT_Get_Postscript_Name(face);
-    FT_Get_FSType_Flags(face);
-    FT_Get_SubGlyph_Info(face->glyph, (FT_Int) rand() % 256, &index, &flags, 
-                                     &p1, &p2, &matrix);
-    // Cleanup
-    FT_Done_Face(face);
-    }
-
-// Cleanup
-FT_Done_FreeType(library);
-return 0;
-
-}
-```
-#### Extended API
-##### Unicode variation sequences
-```c
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <ft2build.h>
-#include <math.h>
-#include <stdbool.h>
-#include FT_FREETYPE_H
-#include FT_GLYPH_H
-
-int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-    FT_Library library;  // handle to library 
-    FT_Face face;       // handle to face object 
-    FT_Error error;     // handle to error
-
-    // Init library
-    error = FT_Init_FreeType(&library);
-    if (error) {
-        return 0;  // Silent failure in fuzzer
-    }
-
-    error = FT_New_Memory_Face(library,
-                              data,    /* first byte in memory */
-                              size,    /* size in bytes        */
-                              0,       /* face_index           */
-                              &face);
-    if (error) {
-        FT_Done_FreeType(library);
-        return 0;
-    }
-    
-    // Unicode variation testing
-    const FT_UInt32* selectors = FT_Face_GetVariantSelectors(face);
-    if (!selectors) { // If no valid selectors, test with a range of variation selectors
-        for (FT_ULong variant_selector = 0xFE00; variant_selector <= 0xFE0F; ++variant_selector) { // First try getting chars for this variant
-            const FT_UInt32* charcodes = FT_Face_GetCharsOfVariant(face, variant_selector);
-            if (charcodes) { // Test existing characters that support this variant
-                for (const FT_UInt32* charcode = charcodes; *charcode != 0; ++charcode) {
-                    FT_UInt glyph_index = FT_Face_GetCharVariantIndex(face, *charcode, variant_selector);
-                    bool is_default = FT_Face_GetCharVariantIsDefault(face, *charcode, variant_selector);
-                    const FT_UInt32* chars_of_variant = FT_Face_GetCharsOfVariant(face, variant_selector);
-                }
-            } else {
-                for (FT_ULong charcode = 0x0041; charcode <= 0x005A; ++charcode) { // Test a range of basic Latin characters
-                    FT_UInt glyph_index = FT_Face_GetCharVariantIndex(face, charcode, variant_selector);
-                    bool is_default = FT_Face_GetCharVariantIsDefault(face, charcode, variant_selector);
-                    const FT_UInt32* chars_of_variant = FT_Face_GetCharsOfVariant(face, variant_selector);
-
-                }
-            }
-        }
-    } else {
-        for (const FT_UInt32* sel = selectors; *sel != 0; ++sel) {  // Test with all available selectors
-            FT_ULong variant_selector = (FT_ULong)*sel;
-            const FT_UInt32* charcodes = FT_Face_GetCharsOfVariant(face, variant_selector);
-            
-            if (charcodes) {
-                for (const FT_UInt32* charcode = charcodes; *charcode != 0; ++charcode) { // Test existing characters that support this variant
-                    FT_UInt glyph_index = FT_Face_GetCharVariantIndex(face, *charcode, variant_selector);
-                    bool is_default = FT_Face_GetCharVariantIsDefault(face, *charcode, variant_selector);
-                    const FT_UInt32* variants = FT_Face_GetVariantsOfChar(face, *charcode);
-                    const FT_UInt32* chars_of_variant = FT_Face_GetCharsOfVariant(face, variant_selector);
-                }
-            } else {
-                for (FT_ULong charcode = 0x0041; charcode <= 0x005A; ++charcode) { // Test a range of basic Latin characters
-                    FT_UInt glyph_index = FT_Face_GetCharVariantIndex(face, charcode, variant_selector);
-                    bool is_default = FT_Face_GetCharVariantIsDefault(face, charcode, variant_selector);
-                    const FT_UInt32* variants = FT_Face_GetVariantsOfChar(face, charcode);
-                    const FT_UInt32* chars_of_variant = FT_Face_GetCharsOfVariant(face, variant_selector);
-                }
-            }
-        }
-    }
-
-    // Cleanup
-    FT_Done_Face(face);
-    FT_Done_FreeType(library);
-    return 0;
-}
-```
-
-##### Glyphs color management
-```c
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <ft2build.h>
-#include <math.h>
-#include <stdbool.h>
-#include FT_FREETYPE_H
-#include FT_COLOR_H
-
-int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-    FT_Library library;
-    FT_Face face;
-    FT_Error error;
-
-    // Init library
-    error = FT_Init_FreeType(&library);
-    if (error) {
-        return 0;
-    }
-
-    // Create new face from fuzzer data
-    error = FT_New_Memory_Face(library,
-                              data,
-                              size,
-                              0,
-                              &face);
-    if (error) {
-        FT_Done_FreeType(library);
-        return 0;
-    }
-
-    // Test palette data retrieval
-    FT_Palette_Data palette_data;
-    error = FT_Palette_Data_Get(face, &palette_data);
-    if (!error) {
-        // If we have valid palette data, test each palette
-        for (FT_UShort palette_index = 0; 
-             palette_index < palette_data.num_palettes; 
-             palette_index++) {
-            
-            // Array to store palette colors
-            FT_Color* colors;
-            
-            // Test palette selection and color retrieval
-            error = FT_Palette_Select(face, palette_index, &colors);
-            if (!error && colors) {
-                // Modify some colors to test write access
-                for (FT_UShort color_index = 0; 
-                     color_index < palette_data.num_palette_entries; 
-                     color_index++) {
-                    
-                    // Modify colors (just for testing)
-                    colors[color_index].red = data[color_index % size];
-                    colors[color_index].green = data[(color_index + 1) % size];
-                    colors[color_index].blue = data[(color_index + 2) % size];
-                    colors[color_index].alpha = data[(color_index + 3) % size];
-                }
-            }
-        }
-
-        // Test setting foreground colors
-        if (size >= 4) {
-            // Create a color from fuzzer data
-            FT_Color foreground_color = {
-                .red = data[0],
-                .green = data[1],
-                .blue = data[2],
-                .alpha = data[3]
-            };
-            
-            // Set foreground color for COLR - pass the structure directly
-            error = FT_Palette_Set_Foreground_Color(face, foreground_color);
-        }
-    }
-
-    // Cleanup
-    FT_Done_Face(face);
-    FT_Done_FreeType(library);
-    return 0;
-}
-```
-
 
 ### API harnesses
 #### Core API
@@ -1169,68 +885,5 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     return 0;
 }
 ```
-
-#  Improving harness
-
-We can improve drastically the speed of execution of our harness by using AFL++ [persistent mode](https://github.com/AFLplusplus/AFLplusplus/tree/stable/utils/persistent_mode) to pass input from memory instead of using File I/O.
-
-**LLVMTestOneInput**
-```c
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-
-int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-
-    return 0;
-}
-
-```
-
-**AFL Persistent mode**
-```c
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-/* this lets the source compile without afl-clang-fast/lto */
-#ifndef __AFL_FUZZ_TESTCASE_LEN
-
-ssize_t       fuzz_len;
-unsigned char fuzz_buf[1024000];
-
-  #define __AFL_FUZZ_TESTCASE_LEN fuzz_len
-  #define __AFL_FUZZ_TESTCASE_BUF fuzz_buf
-  #define __AFL_FUZZ_INIT() void sync(void);
-  #define __AFL_LOOP(x) \
-    ((fuzz_len = read(0, fuzz_buf, sizeof(fuzz_buf))) > 0 ? 1 : 0)
-  #define __AFL_INIT() sync()
-
-#endif
-
-__AFL_FUZZ_INIT();
-
-
-int main(int argc, char  ** argv)
-{
-
-size_t        len;                        /* how much input did we read? */
-unsigned char *buf;                        /* test case buffer pointer    */
-
-buf = __AFL_FUZZ_TESTCASE_BUF; 
-
-while (__AFL_LOOP(UINT_MAX)) {
-    len = __AFL_FUZZ_TESTCASE_LEN; 
-    if (len < 8) { continue; } // Check len minimum size
-}
-
-return 0;
-
-}
-```
-
-This allows our harness to go from 5000 exec/sec to 40000 exec/sec ! 
 
 
