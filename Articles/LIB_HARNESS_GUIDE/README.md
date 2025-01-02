@@ -817,7 +817,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     - Have a good corpus
     - Compile only some version of the harness with asan, 1/15 of them for better coverage
     - Same goes with optimization (`-O3` will give you the best coverage)
-    - Think about [Redqueen](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.cmplog.md)
+    - Think about using [Redqueen](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.cmplog.md)
     - Don't forget to optimize your system with [those tips](https://aflplus.plus/docs/perf_tips/)
     - Have a look at other article for inspiration, [like](https://appsec.guide/docs/fuzzing/techniques/writing-harnesses/) that and [this](https://github.com/Microsvuln/Awesome-Libfuzzer-Harness)
 
