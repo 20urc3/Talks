@@ -478,7 +478,6 @@ There is multiple way to write harnesses. You can choose to write one **BIG** ha
 - A relatively small harness per API sub-topic
 - A medium harness per API called `API harness`
 ### API Sub-topic harnesses
-#### Core API
 ##### Font Testing Macros harness
 ```c
 #include <unistd.h>
@@ -647,7 +646,6 @@ return 0;
 ```
 
 ### API harnesses
-#### Core API
 ```c
 #include <unistd.h>
 #include <stdio.h>
@@ -825,7 +823,7 @@ When diving into fuzzing projects, consider these strategies to enhance your app
   - [Awesome LibFuzzer Harness Collection](https://github.com/Microsvuln/Awesome-Libfuzzer-Harness)
   - You can find more harness I made for this article [here](https://github.com/20urc3/Publications/tree/main/Articles/LIB_HARNESS_GUIDE/harness)
 ## Going further
-A lot of researcher are trying to solve harnessing challenges by offering multiple approach to automate this task. You can find some inspirations in these papers:
+Many researchers are tackling the challenges of harness creation by proposing various approaches to automate this task. You can find inspiration in the following papers:
 - [Automated Fuzzing Harness Generation for Library APIs and Binary Protocol Parsers](https://arxiv.org/abs/2306.15596)
 - [FuzzGen: Automatic Fuzzer Generation](https://www.usenix.org/system/files/sec20fall_ispoglou_prepub.pdf)
 - [Automated Fuzzing Harness Generation for Library APIs and Binary Protocol Parsers](https://www.researchgate.net/publication/371909352_Automated_Fuzzing_Harness_Generation_for_Library_APIs_and_Binary_Protocol_Parsers)
