@@ -809,19 +809,24 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     return 0;
 }
 ```
-# Tips and tricks
-- You can sometime find some harness when searching google for previous researcher work
-- Sometime project implement fuzzing test themself, it's a good thing to have a look there and see what they actually cover or not (might give you an edge)
-- Same goes for OSS-Fuzz, go see what part of the lib/function is covered by oss-fuzz and see if they did not miss something interesting
-- General tips:
-    - Have a good corpus
-    - Compile only some version of the harness with asan, 1/15 of them for better coverage
-    - Same goes with optimization (`-O3` will give you the best coverage)
-    - Think about using [Redqueen](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.cmplog.md)
-    - Don't forget to optimize your system with [those tips](https://aflplus.plus/docs/perf_tips/)
-    - Have a look at other article for inspiration, [like](https://appsec.guide/docs/fuzzing/techniques/writing-harnesses/) that and [this](https://github.com/Microsvuln/Awesome-Libfuzzer-Harness)
-
+# Tips and Tricks
+When diving into fuzzing projects, consider these strategies to enhance your approach:
+## Leveraging Existing Work
+- **Search for Existing Harnesses:** Google previous researchers' work to find potential harnesses that you can adapt or learn from.
+- **Explore Project Test Suites:** Many projects implement their own fuzzing tests. Reviewing these can reveal what areas are already covered and where potential gaps lie, giving you a strategic advantage.
+- **Check OSS-Fuzz Coverage:** Examine which parts of the library or functions are covered by OSS-Fuzz. Identifying overlooked areas can lead to interesting discoveries.
+## General Tips
+- **Build a Robust Corpus:** A diverse and well-curated input corpus is critical for effective fuzzing.
+- **Optimize Compilation:**
+  - Compile a fraction of your builds (e.g., 1/15) with AddressSanitizer (ASan) for better bug detection.
+  - Use optimization flags like `-O3` for improved coverage during fuzzing.
+- **Utilize Advanced Tools:** Consider using [Redqueen](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.cmplog.md) for input-to-state correspondence and deeper insights.
+- **Optimize Your System:** Follow the [AFL++ performance tips](https://aflplus.plus/docs/perf_tips/) to ensure your fuzzing environment is efficient and performant.
+- **Seek Inspiration:** Learn from other resources and articles:
+  - [Fuzzing Techniques and Harness Writing](https://appsec.guide/docs/fuzzing/techniques/writing-harnesses/)
+  - [Awesome LibFuzzer Harness Collection](https://github.com/Microsvuln/Awesome-Libfuzzer-Harness)
 You can find more harness I made for this article [here](https://github.com/20urc3/Publications/tree/main/Articles/LIB_HARNESS_GUIDE/harness)
+
 # Conclusion
 Creating a harness isn’t just about running tools—it's about understanding the nuances of your target, anticipating edge cases, and iterating on what you learn. A good fuzzing harness isn’t perfect on the first attempt, but a carefully constructed one evolves into an indispensable tool for finding bugs and understanding the target's behavior under stress. By following the principles and strategies laid out here, you’re not just building a harness; you’re equipping yourself to systematically tear into assumptions, test boundaries, and uncover vulnerabilities that others might miss. Whether your target is a well-known library or something more obscure, this approach gives you the foundation to fuzz effectively and meaningfully.
 
