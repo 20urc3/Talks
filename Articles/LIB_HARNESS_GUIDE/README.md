@@ -251,7 +251,7 @@ Another excellent resource for information about library functions is the API do
 	- `FT_Glyph_Get_CBox`: Return a glyph control box
 	- `FT_Glyph_To_Bitmap`: Convert a given glyph object to a bitmap glyph object
 	- `FT_Done_Glyph` destroy a given glyph
-
+The extensive API surface for font manipulation presents multiple vectors for both bug discovery and potential security vulnerabilities. Functions like `FT_Face_Properties` and `FT_Attach_Stream` allow for dynamic modification of face objects and attachment of external data, which could expose memory corruption bugs or buffer overflow vulnerabilities if input validation is insufficient. The transformation functions (`FT_Set_Transform`, `FT_Glyph_Transform`) introduce complex mathematical operations that might reveal numerical precision issues or edge cases in coordinate calculations. Color management functions (`FT_Palette_Select`, `FT_Get_Color_Glyph_Paint`) add an additional layer of complexity by handling color tables and gradients, potentially exposing parsing bugs or memory issues when processing malformed color data. The glyph management functions, particularly `FT_Glyph_To_Bitmap` and `FT_Get_Color_Glyph_Layer`, involve format conversion and layer processing that could uncover issues with memory management or reveal bugs in the rendering pipeline. Testing these functions thoroughly is crucial as they often interact with complex font data structures and perform memory operations that could lead to crashes or security vulnerabilities if not properly handled.
 # Write a harness
 ##  Harness Tutorial 1
 Our first harness will be using function collected from the tutorial 1:
