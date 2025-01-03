@@ -489,9 +489,6 @@ There is multiple way to write harnesses. You can choose to write one **BIG** ha
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 
-__AFL_FUZZ_INIT();
-
-
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
 if (size < 10) return 0; // Reject very small inputs
@@ -826,7 +823,11 @@ When diving into fuzzing projects, consider these strategies to enhance your app
   - [Fuzzing Techniques and Harness Writing](https://appsec.guide/docs/fuzzing/techniques/writing-harnesses/)
   - [Awesome LibFuzzer Harness Collection](https://github.com/Microsvuln/Awesome-Libfuzzer-Harness)
   - You can find more harness I made for this article [here](https://github.com/20urc3/Publications/tree/main/Articles/LIB_HARNESS_GUIDE/harness)
-
+## Going further
+A lot of researcher are trying to solve harnessing challenges by offering multiple approach to automate this task. You can find some inspirations in these papers:
+- [Automated Fuzzing Harness Generation for Library APIs and Binary Protocol Parsers](https://arxiv.org/abs/2306.15596)
+- [FuzzGen: Automatic Fuzzer Generation](https://www.usenix.org/system/files/sec20fall_ispoglou_prepub.pdf)
+- [Automated Fuzzing Harness Generation for Library APIs and Binary Protocol Parsers](https://www.researchgate.net/publication/371909352_Automated_Fuzzing_Harness_Generation_for_Library_APIs_and_Binary_Protocol_Parsers)
 # Conclusion
 Creating a harness isn’t just about running tools—it's about understanding the nuances of your target, anticipating edge cases, and iterating on what you learn. A good fuzzing harness isn’t perfect on the first attempt, but a carefully constructed one evolves into an indispensable tool for finding bugs and understanding the target's behavior under stress. By following the principles and strategies laid out here, you’re not just building a harness; you’re equipping yourself to systematically tear into assumptions, test boundaries, and uncover vulnerabilities that others might miss. Whether your target is a well-known library or something more obscure, this approach gives you the foundation to fuzz effectively and meaningfully.
 
