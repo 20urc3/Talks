@@ -1,4 +1,5 @@
-# Intro
+# Harnessing Libraries for Effective Fuzzing
+## Intro
 Every security researcher or fuzzer enthusiast dreams of a program that takes a file as input, achieves deep coverage, and executes with lightning speed. Unfortunately, in the real world, only a handful of targets meet this ideal, making it unwise to "dumb fuzz" them (and you shouldn't! See [this guide](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.persistent_mode.md)).
 
 Most targets are not fuzzable out of the box and require you, the researcher, to do some heavy lifting to enable efficient fuzzing. In this article, we will explore *how to fuzz a library*, from the **basics** to **persistent mode**. Our focus will be on [Freetype](http://freetype.org/), a widely used software library for accessing font file contents.
